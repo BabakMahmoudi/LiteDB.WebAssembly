@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LiteDB.Engine.Disk.Streams;
+using Microsoft.JSInterop;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,9 +18,13 @@ namespace LiteDB
         Task InitializeAsync();
         //Task SetLengthAsync(long value);
     }
-    public interface IAsyncStreamEx:IAsyncInitialize
+    public interface IAsyncStreamEx : IAsyncInitialize
     {
         //Task InitializeAsync();
         Task SetLengthAsync(long value);
+        Task DeleteDatabase();
+        StreamOptions Options { get; }
+        IJSRuntime Runtime { get; }
+        string DatabaseName { get; }
     }
 }

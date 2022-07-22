@@ -124,9 +124,18 @@ class IndexedDbStream {
             const objectStore = transaction.objectStore(this.name);
             var idx = this.options.parsePage(pages[i]).pageIndex;
             await this._delete(objectStore, idx);
+            
             //await this._delete(objectStore, pages[i].pageIndex);
         }
 
+    }
+    async deleteDatabase() {
+        return new Promise((resolve, reject) => {
+            var req = window.indexedDB.deleteDatabase(this.name);
+            req.onsuccess = resolve;
+            req.onerror = reject;
+        });
+        
     }
 
 
@@ -201,6 +210,16 @@ class LocalStorageStream {
             //localStorage.setItem(this.getKey(pages[i].pageIndex), pages[i].content);
         }
         return 0;
+    }
+    async deleteDatabase() {
+        const keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            if (this.isValidKey(localStorage.key(i))) {
+                keys.push(localStorage.key(i));
+            }
+        }
+        keys.forEach(x => localStorage.removeItem(x));
+        
     }
     async delete(pages, ll) {
         if (!pages || !Array.isArray(pages))

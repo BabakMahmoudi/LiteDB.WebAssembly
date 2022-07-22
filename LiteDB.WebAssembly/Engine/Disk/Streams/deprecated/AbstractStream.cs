@@ -8,17 +8,10 @@ using System.Threading.Tasks;
 using LiteDB;
 using LiteDB.Engine.Disk.Streams;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.JSInterop;
 
 namespace LiteDB.Engine.Disk.Streams
 {
-    public class StreamOptions
-    {
-        public bool UseCache { get; set; }
-        public string KeyTemplate { get; private set; } = "page_{0}_{1:000000}";
-        public string DefaultDbName { get; private set; } = "litedb";
-        public StorageBackends StorageBackend { get; set; }
-        public static StreamOptions Default = new StreamOptions();
-    }
     public abstract class AbstractStream : Stream, IAsyncStreamEx
     {
         protected long _position;
@@ -35,7 +28,7 @@ namespace LiteDB.Engine.Disk.Streams
         protected List<Task> _tasks;
         public bool UseWriteCaches = false;
         protected Dictionary<long, PageData> _cache = new Dictionary<long, PageData>();
-
+        public StreamOptions Options => this.options;
         public long GetPageIndex(long position)
         {
             return position / LiteDB.Constants.PAGE_SIZE;
@@ -113,6 +106,11 @@ namespace LiteDB.Engine.Disk.Streams
         public override bool CanSeek => true;
 
         public override long Position { get => _position; set => _position = value; }
+
+        public IJSRuntime Runtime => throw new NotImplementedException();
+
+        public string DatabaseName => throw new NotImplementedException();
+
         public override int Read(byte[] buffer, int offset, int count)
         {
             return ReadAsync(buffer, offset, count).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -245,6 +243,11 @@ namespace LiteDB.Engine.Disk.Streams
             _position = position;
 
             return _position;
+        }
+
+        public Task DeleteDatabase()
+        {
+            throw new NotImplementedException();
         }
     }
 }

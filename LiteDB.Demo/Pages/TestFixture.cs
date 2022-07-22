@@ -17,7 +17,7 @@ namespace LiteDB.Demo.Pages
         public IBlazorLiteDatabaseFactory factory { get; protected set; }
         private ILiteDatabase db;
         protected StringBuilder _log = new StringBuilder();
-        
+
         public virtual Engine.Disk.Streams.StorageBackends Backend { get; }
 
         protected override void OnInitialized()
@@ -34,7 +34,7 @@ namespace LiteDB.Demo.Pages
         {
             _log = new StringBuilder();
         }
-        public virtual async Task<ILiteDatabase> GetDb(bool refersh = false, bool open = true, bool cache = false)
+        public virtual async Task<ILiteDatabase> GetDb(bool refersh = true, bool open = true, bool cache = false)
         {
             if (this.db == null || refersh)
             {
@@ -109,8 +109,8 @@ namespace LiteDB.Demo.Pages
             await collection.DeleteAllAsync();
             Assert((await collection.LongCountAsync()) == 0, "Count should be 0 after delete all");
             Log($"All items successfully deleted. Count: '{await collection.LongCountAsync()}'");
-            await db.DropCollectionAsync(collection.Name);
             await this.GetDb(true, false);
+            Log($"Test terminated successfully.\r\n ==============================");
         }
 
         public async Task Bulk()
@@ -145,10 +145,11 @@ namespace LiteDB.Demo.Pages
                     Assert(diff >= 0, "");
                 }
             }
-            dt = Stopwatch.StartNew();
-            await colection.DeleteAllAsync();
-            Log($"All items deleted in {dt.ElapsedMilliseconds} milliseconds. Count: {await colection.LongCountAsync()}");
+            //dt = Stopwatch.StartNew();
+            //await colection.DeleteAllAsync();
+            //Log($"All items deleted in {dt.ElapsedMilliseconds} milliseconds. Count: {await colection.LongCountAsync()}");
             db = await this.GetDb(true);
+            Log($"Test terminated successfully.\r\n ==============================");
 
         }
         public async Task Index()
@@ -173,16 +174,8 @@ namespace LiteDB.Demo.Pages
             Log($"{items.Length} found for Age==20 with index in {dt.ElapsedMilliseconds} milliseconds.");
 
             await colection.DropIndexAsync("index");
-
             db = await this.GetDb(true);
-
-
-
-
-
-
-
-
+            Log($"Test terminated successfully.\r\n ==============================");
         }
 
         public async Task LargeData()
@@ -204,7 +197,7 @@ namespace LiteDB.Demo.Pages
             dt = Stopwatch.StartNew();
             var allitems = await collection.FindAllAsync().ReadAll();
             Log($"Retrieved {allitems.Length} items in {dt.ElapsedMilliseconds} milliseconds");
-
+            Log($"Test terminated successfully.\r\n ==============================");
             //db = await this.GetDb(true, useCaceh:true);
             //collection = db.GetCollection<LargeData>();
             //dt = Stopwatch.StartNew();
@@ -227,8 +220,6 @@ namespace LiteDB.Demo.Pages
             await db.CheckpointAsync();
 
         }
-
-
         public async ValueTask DisposeAsync()
         {
             if (this.db != null)
@@ -236,5 +227,111 @@ namespace LiteDB.Demo.Pages
                 await this.db.DisposeAsync();
             }
         }
+
+        public async Task CopyDatabase()
+        {
+            var db = await this.GetDb(cache: false);
+            var collection = db.GetCollection<LargeData>();
+            var personsCollection = db.GetCollection<PersonData>();
+            var count = 10;
+            var _rnd = new Random();
+            var docs = Enumerable.Range(1, count).Select(i => new LargeData
+            {
+                Name = "Bulk " + i,
+                Age = _rnd.Next(10, 90),
+                Data = new string('x', 50)
+            });
+
+            var persons = Enumerable.Range(1, count).Select(i => new PersonData
+            {
+                Name = "Bulk " + i,
+            });
+
+            var dt = Stopwatch.StartNew();
+            await collection.InsertAsync(docs);
+            await personsCollection.InsertAsync(persons);
+            var db2 = factory.Create("temp", cfg =>
+            {
+                cfg.StorageBackend = Engine.Disk.Streams.StorageBackends.LocalStorage;
+            });
+            await db2.OpenAsync();
+            await db.CopyCollections(db2, collection, personsCollection);
+            var items = await db2.GetCollection<LargeData>().FindAllAsync().ReadAll();
+            var persons_in_destination = await db2.GetCollection<PersonData>().FindAllAsync().ReadAll();
+        }
+
+        public async Task DeleteDatabase()
+        {
+            Log("Deleting database");
+            var dt = Stopwatch.StartNew();
+            var db = await this.GetDb();
+            this.db = null;
+            await db.DeleteDatabase();
+            Log($"Database successfully deleted in {dt.ElapsedMilliseconds} milliseconds.");
+
+        }
+        public async Task RepairDatabase()
+        {
+            var db = await this.GetDb(true);
+            var largeData = db.GetCollection<LargeData>();
+            var persons = db.GetCollection<PersonData>();
+            var count = 10;
+            var _rnd = new Random();
+            Log("Inserting data.");
+            await persons.DeleteAllAsync();
+            await largeData.DeleteAllAsync();
+            var docs = Enumerable.Range(1, count).Select(i => new LargeData
+            {
+                Name = "Bulk " + i,
+                Age = _rnd.Next(10, 90),
+                Data = new string('x', 50)
+            });
+
+            var personsItems = Enumerable.Range(1, count).Select(i => new PersonData
+            {
+                Name = "Bulk " + i,
+            });
+
+            await largeData.InsertAsync(docs);
+            await persons.InsertAsync(personsItems);
+
+            var persons_before_repair = await db.GetCollection<PersonData>().FindAllAsync().ReadAll();
+
+            Log("Repairing database ...");
+            var dt = Stopwatch.StartNew();
+            await db.RepairDatabase(persons,largeData);
+            Log($"Database repaired in {dt.ElapsedMilliseconds} milliseconds");
+
+            db = await this.GetDb(true);
+
+            var dara_after_repair = await db.GetCollection<LargeData>().FindAllAsync().ReadAll();
+            var persons_after_repair = await db.GetCollection<PersonData>().FindAllAsync().ReadAll();
+            Assert(dara_after_repair.Length == docs.Count(),"Data count should be same after repair");
+            Assert(persons_after_repair.Length == personsItems.Count(), "Data count should be same after repair");
+            Log($"Database verified");
+
+
+
+
+        }
+    
+        public async Task Stats()
+        {
+            var db = await this.GetDb(true);
+            
+            Log($"Database Stats: Persons Count:{await db.GetCollection<PersonData>().LongCountAsync()} " +
+                $" Data Count:{await db.GetCollection<LargeData>().LongCountAsync()}");
+        }
+        public async Task Clear()
+        {
+            var db = await this.GetDb(true);
+            Log("Clearing Database");
+            await db.GetCollection<PersonData>().DeleteAllAsync();
+            await db.GetCollection<LargeData>().DeleteAllAsync();
+            Log($"Database Stats: Persons Count:{await db.GetCollection<PersonData>().LongCountAsync()} " +
+                $" Data Count:{await db.GetCollection<LargeData>().LongCountAsync()}");
+        }
+
+
     }
 }

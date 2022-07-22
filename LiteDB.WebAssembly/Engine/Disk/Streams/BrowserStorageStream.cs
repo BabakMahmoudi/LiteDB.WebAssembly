@@ -26,8 +26,10 @@ namespace LiteDB.Engine.Disk.Streams
         protected List<Task> _tasks;
         public bool UseWriteCaches = false;
         protected Dictionary<long, PageData> _cache = new Dictionary<long, PageData>();
+        public IJSRuntime Runtime { get; private set; }
 
-        
+        public string DatabaseName => this._name;
+
 
         public BrowserStorageStream(IJSRuntime runtime, string name, StreamOptions options)
         {
@@ -38,6 +40,7 @@ namespace LiteDB.Engine.Disk.Streams
             this.PageSize = LiteDB.Constants.PAGE_SIZE;
             this.UseWriteCaches = options.UseCache;
             this._tasks = new List<Task>();
+            this.Runtime = runtime;
             switch (options.StorageBackend)
             {
                 case StorageBackends.LocalStorage:
@@ -115,6 +118,11 @@ namespace LiteDB.Engine.Disk.Streams
         public override bool CanSeek => true;
 
         public override long Position { get => _position; set => _position = value; }
+
+        public StreamOptions Options => this.options;
+
+        
+
         public override int Read(byte[] buffer, int offset, int count)
         {
             return ReadAsync(buffer, offset, count).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -233,6 +241,11 @@ namespace LiteDB.Engine.Disk.Streams
             {
                 await adapter.DisposeAsync();
             }
+        }
+
+        public Task DeleteDatabase()
+        {
+            return this.adapter.DeleteDatabase();
         }
     }
 }

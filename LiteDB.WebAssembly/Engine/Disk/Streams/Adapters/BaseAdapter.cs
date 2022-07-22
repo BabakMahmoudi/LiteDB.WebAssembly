@@ -85,5 +85,11 @@ namespace LiteDB.Engine.Disk.Streams.Adapters
             this._module = null;
             this._import = null;
         }
+
+        public async Task DeleteDatabase()
+        {
+            await (await this.GetModule())
+                .InvokeVoidAsync("deleteDatabase");
+        }
     }
 }

@@ -10,6 +10,7 @@ namespace LiteDB.Engine.Services
     {
         Task DeleteDatabaseAsync();
         Task RegisterCollectionAsync<T>(ILiteCollection<T> collection);
+        Task CopyCollectionTo(ILiteDatabase destination);
 
     }
     class CollectionData
@@ -43,6 +44,11 @@ namespace LiteDB.Engine.Services
         {
             await this.GetCollections()
                 .UpsertAsync(new CollectionData { Id = collection.Name, Data = "" });
+        }
+
+        public Task CopyCollectionTo(ILiteDatabase destination)
+        {
+            throw new NotImplementedException();
         }
     }
 }

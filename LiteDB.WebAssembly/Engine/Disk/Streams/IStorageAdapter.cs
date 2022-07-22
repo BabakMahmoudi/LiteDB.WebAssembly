@@ -13,6 +13,7 @@ namespace LiteDB.Engine.Disk.Streams
         Task<long> DoGetPageCount();
         Task DoInitializeAsync();
         Task DoDeletePages(PageData[] pages);
+        Task DeleteDatabase();
 
     }
 }
