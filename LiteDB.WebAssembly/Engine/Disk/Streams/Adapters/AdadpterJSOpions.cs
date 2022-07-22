@@ -8,7 +8,7 @@ namespace LiteDB.Engine.Disk.Streams.Adapters
 {
     class AdadpterJSOpions
     {
-        public string IndexKey => ToCamel(nameof(PageData.PageIndex));
+        public string IndexKey => ToCamel(nameof(PageData.Index));
         public string ContentKey => ToCamel(nameof(PageData.Content));
         public object CallBackReference { get; set; }
         public string Backend { get; set; }

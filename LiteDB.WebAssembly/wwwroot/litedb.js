@@ -1,4 +1,4 @@
-﻿const keyPath = 'pageIndex';
+﻿
 
 class IndexedDbStream {
     constructor(name, options) {
@@ -19,7 +19,7 @@ class IndexedDbStream {
             }
             req.onupgradeneeded = ev => {
                 const db = ev.target.result;
-                const objectStore = db.createObjectStore(storeName, { keyPath: keyPath });
+                const objectStore = db.createObjectStore(storeName, { keyPath: this.options.indexKey });
             }
             req.onsuccess = ev => {
                 const db = ev.target.result;
@@ -68,8 +68,6 @@ class IndexedDbStream {
     }
     async write(pages, n) {
         var db = await this.getDb();
-        var fff = pages;
-        var hh = n;
         if (!pages || !Array.isArray(pages)) {
             throw "Invalid buffer";
         }
@@ -78,16 +76,15 @@ class IndexedDbStream {
         const promises = [];
 
         for (var i = 0; i < pages.length; i++) {
+            var parsed = this.options.parsePage(pages[i]);
             var record = {};
-            record[keyPath] = pages[i].pageIndex;
-            record["content"] = pages[i].content;
+            record[this.options.indexKey] = parsed.pageIndex;
+            record[this.options.contentKey] = parsed.content;
+
             promises.push(this._write(objectStore, record));
         }
         await Promise.all(promises);
         return 0;
-
-
-
     }
     _read(os, offset) {
         return new Promise((resolve, reject) => {
@@ -97,8 +94,6 @@ class IndexedDbStream {
             }
             req.onerror = (ev) => reject(ev);
         })
-
-
     }
     async read(index) {
         var db = await this.getDb();
@@ -124,15 +119,13 @@ class IndexedDbStream {
         var db = await this.getDb();
         if (!pages || !Array.isArray(pages))
             throw `Invalid Argument ${pages}`
-        var c1 = await this.getCount();
         for (var i = 0; i < pages.length; i++) {
             const transaction = db.transaction([this.name], "readwrite");
             const objectStore = transaction.objectStore(this.name);
-            await this._delete(objectStore, pages[i].pageIndex);
+            var idx = this.options.parsePage(pages[i]).pageIndex;
+            await this._delete(objectStore, idx);
+            //await this._delete(objectStore, pages[i].pageIndex);
         }
-        var c2 = await this.getCount();
-        var ok = c1 - c2 == pages.length;
-
 
     }
 
@@ -160,6 +153,7 @@ class LocalStorageStream {
         this.prefix = "$" + this.name;
 
     }
+   
     isValidKey(k) {
         return k && k != null && k.startsWith(this.prefix);
     }
@@ -171,7 +165,6 @@ class LocalStorageStream {
             if (this.isValidKey(k)) {
                 count++;
             }
-
         }
         return count;
     }
@@ -187,25 +180,25 @@ class LocalStorageStream {
     }
     async read(index) {
         const res = localStorage.getItem(this.getKey(index));
-        if (res)
-            return {
-                pageIndex: index,
-                content: res || ''
-            };
+        if (res) {
+            return this.options.encodePage(index, res);
+            //return {
+            //    pageIndex: index,
+            //    content: res || ''
+            //};
+        }
         else {
             return null;
         }
     }
     async write(pages, n) {
         for (var i = 0; i < pages.length; i++) {
-            var index = pages[i].pageIndex;
-            if (typeof index === 'undefined' || typeof index !== 'number') {
+            var parse = this.options.parsePage(pages[i]);
+            if (typeof parse.pageIndex === 'undefined' || typeof parse.pageIndex !== 'number') {
                 console.log('errr');
-
             }
-            var k = this.getKey(i);
-
-            localStorage.setItem(this.getKey(pages[i].pageIndex), pages[i].content);
+            localStorage.setItem(this.getKey(parse.pageIndex), parse.content);
+            //localStorage.setItem(this.getKey(pages[i].pageIndex), pages[i].content);
         }
         return 0;
     }
@@ -213,7 +206,9 @@ class LocalStorageStream {
         if (!pages || !Array.isArray(pages))
             throw `Invalid Argument ${pages}`
         for (var i = 0; i < pages.length; i++) {
-            localStorage.removeItem(this.getKey(pages[i].pageIndex))
+            
+            //localStorage.removeItem(this.getKey(pages[i].pageIndex))
+            localStorage.removeItem(this.getKey(this.options.parsePage(pages[i]).pageIndex));
         }
     }
 }
@@ -222,10 +217,23 @@ export function createInstance(name, options) {
 
     options = options || {
         backend: "indexeddb",
-        indexKey: "pageIndex",
+        indexKey: "index",
         contentKey: "content",
         callBack: null
     }
+    options.parsePage = function (page) {
+        return {
+            pageIndex: page[this.indexKey],
+            content: page[this.contentKey]
+        }
+    }
+    options.encodePage = function (index,content) {
+        var result = {};
+        result[this.indexKey] = index;
+        result[this.contentKey] = content;
+        return result;
+    }
+
 
 
     switch (options.backend) {

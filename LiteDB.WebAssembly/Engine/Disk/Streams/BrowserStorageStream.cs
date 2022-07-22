@@ -172,7 +172,7 @@ namespace LiteDB.Engine.Disk.Streams
             if (this.options.UseCache)
             {
                 page.IsDirty = true;
-                this._cache[page.PageIndex] = page;
+                this._cache[page.Index] = page;
             }
             else
             {
@@ -192,7 +192,7 @@ namespace LiteDB.Engine.Disk.Streams
             {
                 pages.Add(new PageData
                 {
-                    PageIndex = i,
+                    Index = i,
                     PageKey = this.GetPageKeyByIndex(i),
                     Content = ""
                 });

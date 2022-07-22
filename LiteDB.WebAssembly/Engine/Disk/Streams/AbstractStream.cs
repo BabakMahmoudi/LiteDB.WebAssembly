@@ -11,35 +11,6 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace LiteDB.Engine.Disk.Streams
 {
-
-    public class PageData
-    {
-        public long PageIndex { get; set; }
-        public string PageKey { get; set; }
-
-        public string Content { get; set; }
-
-        public DateTime LastAccessed { get; set; }
-        public bool IsDirty { get; set; }
-
-        public byte[] Bytes() => Convert.FromBase64String(this.Content??"");
-
-        public PageData()
-        {
-
-        }
-        public PageData(long index, string key, string content)
-        {
-            this.PageIndex = index;
-            this.PageKey = key;
-            this.Content = content ?? "";
-        }
-        public PageData(long index, string key, byte[] buffer, int offset, int count) :
-            this(index, key, Convert.ToBase64String(buffer, offset, count, Base64FormattingOptions.None))
-        {
-        }
-
-    }
     public class StreamOptions
     {
         public bool UseCache { get; set; }
@@ -221,7 +192,7 @@ namespace LiteDB.Engine.Disk.Streams
             if (this.options.UseCache)
             {
                 page.IsDirty = true;
-                this._cache[page.PageIndex] = page;
+                this._cache[page.Index] = page;
             }
             else
             {
@@ -241,7 +212,7 @@ namespace LiteDB.Engine.Disk.Streams
             {
                 pages.Add(new PageData
                 {
-                    PageIndex = i,
+                    Index = i,
                     PageKey = this.GetPageKeyByIndex(i),
                     Content = ""
                 });

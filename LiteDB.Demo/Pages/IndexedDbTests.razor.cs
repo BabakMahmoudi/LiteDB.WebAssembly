@@ -8,7 +8,7 @@ namespace LiteDB.Demo.Pages
 {
     public partial class IndexedDbTests
     {
-        public override StorageBackends Backend => StorageBackends.LocalStorage;
+        public override StorageBackends Backend => StorageBackends.IndexedDb;
         public IndexedDbTests()
         {
 
