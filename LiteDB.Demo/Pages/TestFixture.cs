@@ -109,6 +109,7 @@ namespace LiteDB.Demo.Pages
             await collection.DeleteAllAsync();
             Assert((await collection.LongCountAsync()) == 0, "Count should be 0 after delete all");
             Log($"All items successfully deleted. Count: '{await collection.LongCountAsync()}'");
+            await db.DropCollectionAsync(collection.Name);
             await this.GetDb(true, false);
         }
 

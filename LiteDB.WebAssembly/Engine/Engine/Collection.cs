@@ -36,10 +36,10 @@ namespace LiteDB.Engine
                 if (snapshot.CollectionPage == null) return false;
 
                 LOG($"drop collection `{name}`", "COMMAND");
+                throw new NotImplementedException();
 
                 // call drop collection service
-                //await snapshot.DropCollection(transaction.Safepoint);
-                throw new NotImplementedException();
+                await snapshot.DropCollection(transaction.Safepoint);
 
                 // remove sequence number (if exists)
                 //_sequences.TryRemove(name, out var dummy);

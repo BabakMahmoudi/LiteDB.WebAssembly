@@ -233,9 +233,6 @@ export function createInstance(name, options) {
         result[this.contentKey] = content;
         return result;
     }
-
-
-
     switch (options.backend) {
         case 'localstorage':
             return new LocalStorageStream(name, options);
