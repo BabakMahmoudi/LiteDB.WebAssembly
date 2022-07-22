@@ -1,71 +1,29 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using LiteDB.Demo.Tests;
+using LiteDB.WebAssembly;
+using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-
-using System.Threading.Tasks;
-using LiteDB.WebAssembly;
-using System.Text;
 using System.Diagnostics;
-using LiteDB.Demo.Tests;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace LiteDB.Demo.Pages
 {
-
-    public class PersonData
+    public class TestFixture : ComponentBase, ITestFixture, IAsyncDisposable
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public override string ToString()
-        {
-            return $"Id: '{Id}', Name: '{Name}'";
-        }
-    }
-    public class LargeData
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Data { get; set; } = new string('x', 5);
-        public int Age { get; set; }
-        public override string ToString()
-        {
-            return $"Id: '{Id}', Name: '{Name}'";
-        }
-    }
-    public class IndexData
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Data { get; set; } = new string('x', 5);
-        public int Age { get; set; }
-        public override string ToString()
-        {
-            return $"Id: '{Id}', Name: '{Name}'";
-        }
-    }
 
-
-
-
-    public class AddressData
-    {
-        public int Id { get; set; }
-        public string Street { get; set; }
-        public override string ToString()
-        {
-            return $"Id: '{Id}', Name: '{Street}'";
-        }
-    }
-
-
-
-    public partial class LiteDBDemo : IAsyncDisposable, ITestFixture
-    {
         [Inject]
         public IBlazorLiteDatabaseFactory factory { get; protected set; }
         private ILiteDatabase db;
-        private StringBuilder _log = new StringBuilder();
+        protected StringBuilder _log = new StringBuilder();
+        
+        public virtual Engine.Disk.Streams.StorageBackends Backend { get; }
 
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+        }
         public void Log(string fmt, params object[] args)
         {
             _log.AppendFormat(fmt, args);
@@ -76,11 +34,7 @@ namespace LiteDB.Demo.Pages
         {
             _log = new StringBuilder();
         }
-
-
-
-
-        public async Task<ILiteDatabase> GetDb(bool refersh = false, bool open = true, bool cache = false)
+        public virtual async Task<ILiteDatabase> GetDb(bool refersh = false, bool open = true, bool cache = false)
         {
             if (this.db == null || refersh)
             {
@@ -89,7 +43,7 @@ namespace LiteDB.Demo.Pages
                 this.db = factory.Create("demo", cfg =>
                 {
                     cfg.UseCache = cache;
-                    cfg.StorageBackend = Engine.Disk.Streams.StorageBackends.IndexedDb;
+                    cfg.StorageBackend = Backend;
 
                 });
             }
@@ -99,10 +53,12 @@ namespace LiteDB.Demo.Pages
             }
             return this.db;
         }
+
         public async Task OpenDatabase()
         {
-            this.db = await this.GetDb();
-            await db.OpenAsync();
+
+            var db = await this.GetDb(true);
+            Log("Database successfully opened");
         }
         void Assert(bool check, string comment)
         {
@@ -114,7 +70,7 @@ namespace LiteDB.Demo.Pages
             var db = await this.GetDb();
             var collection = db.GetCollection<PersonData>();
             var count_before_add = await collection.LongCountAsync();
-            Log($"Database successfully opened. Count: '{count_before_add}'.");
+            Log($"Database successfully opened. Backend: '{this.Backend}' Count: '{count_before_add}'.");
             var name = $"Random {Guid.NewGuid()}";
             var id = await collection.InsertAsync(new PersonData { Name = name });
             var count_after_add = await collection.LongCountAsync();
@@ -270,6 +226,8 @@ namespace LiteDB.Demo.Pages
             await db.CheckpointAsync();
 
         }
+
+
         public async ValueTask DisposeAsync()
         {
             if (this.db != null)

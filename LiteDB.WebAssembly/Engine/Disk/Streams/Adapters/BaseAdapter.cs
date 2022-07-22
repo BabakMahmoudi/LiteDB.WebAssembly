@@ -1,29 +1,25 @@
-﻿using LiteDB.Engine.Disk.Streams.Adapters;
-using Microsoft.JSInterop;
+﻿using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LiteDB.Engine.Disk.Streams
+namespace LiteDB.Engine.Disk.Streams.Adapters
 {
-    class InitModel
-    {
-        public long Length { get; set; }
-    }
-    public class IndexedDbStream : AbstractStream
+    public class BaseAdapter : IStorageAdapter
     {
         private readonly IJSRuntime runtime;
-        private DotNetObjectReference<IndexedDbStream> objRef;
+        private DotNetObjectReference<BaseAdapter> objRef;
         private IJSObjectReference _module;
         private IJSObjectReference _import;
-
-        public IndexedDbStream(IJSRuntime runtime, string dbName, StreamOptions options) : base(dbName, options)
+        private string _name;
+        protected StorageBackends backedn;
+        public BaseAdapter(IJSRuntime runtime, string dbName, StorageBackends Backend = StorageBackends.LocalStorage)
         {
             this.runtime = runtime;
-
-
+            this._name = dbName;
+            this.backedn = Backend;
         }
         public async Task<IJSObjectReference> GetModule()
         {
@@ -31,41 +27,42 @@ namespace LiteDB.Engine.Disk.Streams
             var js = $"/_content/{n}/litedb.js";
             if (this._module == null)
             {
+                this.objRef = DotNetObjectReference.Create(this);
                 var options = new AdadpterJSOpions
                 {
                     CallBackReference = this.objRef,
-                    Backend = StorageBackends.IndexedDb.ToString().ToLowerInvariant()
+                    Backend = this.backedn.ToString().ToLowerInvariant()
 
                 };
-                this.objRef = DotNetObjectReference.Create(this);
+
                 this._import = await runtime.InvokeAsync<IJSObjectReference>("import", js);
                 this._module = await this._import.InvokeAsync<IJSObjectReference>("createInstance", this._name, options);
+
             }
             return this._module;
         }
 
-        protected override async Task DoDeletePages(PageData[] pages)
+        public virtual async Task DoDeletePages(PageData[] pages)
         {
             var ff = pages.ToArray();
             await (await this.GetModule())
-                .InvokeVoidAsync("delete", ff,"lll");
+                .InvokeVoidAsync("delete", ff, "lll");
         }
 
-        protected override async Task<long> DoGetPageCount()
+        public virtual async Task<long> DoGetPageCount()
         {
             return await (await this.GetModule())
                 .InvokeAsync<long>("getCount");
 
         }
 
-        protected override async Task DoInitializeAsync()
+        public virtual async Task DoInitializeAsync()
         {
             var m = await this.GetModule();
-            var res = await m.InvokeAsync<InitModel>("initialize");
-            this._length = res.Length * PAGE_SIZE;
+            await m.InvokeVoidAsync("initialize");
         }
 
-        protected override async Task<PageData> DoReadAsync(long page, string key)
+        public virtual async Task<PageData> DoReadAsync(long page, string key)
         {
             var res = await (await this.GetModule())
                 .InvokeAsync<PageData>("read", page, key);
@@ -73,13 +70,13 @@ namespace LiteDB.Engine.Disk.Streams
             return res;
 
         }
-        protected override async Task<long> DoWriteAsync(PageData[] pages)
+        public virtual async Task<long> DoWriteAsync(PageData[] pages)
         {
             await (await this.GetModule())
                 .InvokeVoidAsync("write", pages, "ll");
             return 0;
         }
-        public override async ValueTask DisposeAsync()
+        public virtual async ValueTask DisposeAsync()
         {
             if (this._module != null)
                 await this._module.DisposeAsync();

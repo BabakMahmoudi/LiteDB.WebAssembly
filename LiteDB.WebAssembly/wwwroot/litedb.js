@@ -1,8 +1,9 @@
 ﻿const keyPath = 'pageIndex';
+
 class IndexedDbStream {
-    constructor(name, ref) {
+    constructor(name, options) {
         this.name = name;
-        this.ref = ref;
+        this.options = options;
         this.db = null;
 
     }
@@ -152,9 +153,9 @@ class IndexedDbStream {
 }
 
 class LocalStorageStream {
-    constructor(name, ref) {
+    constructor(name, options) {
         this.name = name;
-        this.ref = ref;
+        this.options = options;
         this.db = null;
         this.prefix = "$" + this.name;
 
@@ -186,10 +187,14 @@ class LocalStorageStream {
     }
     async read(index) {
         const res = localStorage.getItem(this.getKey(index));
-        return {
-            pageIndex:index,
-            content : res ||''
-        };
+        if (res)
+            return {
+                pageIndex: index,
+                content: res || ''
+            };
+        else {
+            return null;
+        }
     }
     async write(pages, n) {
         for (var i = 0; i < pages.length; i++) {
@@ -211,12 +216,24 @@ class LocalStorageStream {
             localStorage.removeItem(this.getKey(pages[i].pageIndex))
         }
     }
-
-
 }
 
-export function createInstance(name, ref) {
-    return new LocalStorageStream(name, ref);
-    return new IndexedDbStream(name, ref);
+export function createInstance(name, options) {
+
+    options = options || {
+        backend: "indexeddb",
+        indexKey: "pageIndex",
+        contentKey: "content",
+        callBack: null
+    }
+
+
+    switch (options.backend) {
+        case 'localstorage':
+            return new LocalStorageStream(name, options);
+        default:
+            return new IndexedDbStream(name, options);
+    }
+
 }
 

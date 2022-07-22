@@ -1,4 +1,5 @@
 ﻿using LiteDB.Engine;
+using LiteDB.Engine.Disk.Streams;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,17 @@ namespace LiteDB.WebAssembly.Internal
             this.UseCache = true;
             return this;
         }
+        public BlazorLiteDBOptions WithLocalStorage()
+        {
+            this.StorageBackend = StorageBackends.LocalStorage;
+            return this;
+        }
+        public BlazorLiteDBOptions WithIndexdDb()
+        {
+            this.StorageBackend = StorageBackends.IndexedDb;
+            return this;
+        }
+
         //public BlazorLiteDBOptions WithReadCache(bool value = true)
         //{
         //    this.UseReadCaches = true;

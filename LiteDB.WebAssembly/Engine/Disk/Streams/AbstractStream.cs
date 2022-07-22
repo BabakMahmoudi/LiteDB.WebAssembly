@@ -6,9 +6,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LiteDB;
+using LiteDB.Engine.Disk.Streams;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace LiteDB.Engine
+namespace LiteDB.Engine.Disk.Streams
 {
 
     public class PageData
@@ -44,6 +45,7 @@ namespace LiteDB.Engine
         public bool UseCache { get; set; }
         public string KeyTemplate { get; private set; } = "page_{0}_{1:000000}";
         public string DefaultDbName { get; private set; } = "litedb";
+        public StorageBackends StorageBackend { get; set; }
         public static StreamOptions Default = new StreamOptions();
     }
     public abstract class AbstractStream : Stream, IAsyncStreamEx
@@ -52,6 +54,8 @@ namespace LiteDB.Engine
         protected long? _length;
         protected string _name;
         private readonly StreamOptions options;
+
+        
 
         public long PageSize { get; private set; }
         public string Name { get; private set; }

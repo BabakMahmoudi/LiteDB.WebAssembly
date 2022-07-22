@@ -1,0 +1,12 @@
+﻿@page "/indexeddb"
+@inherits TestFixture
+<h3>IndexedDb Tests</h3>
+<button class="btn btn-outline-warning" @onclick="ClearLog">Clear Log</button>
+<button class="btn btn-primary" @onclick="OpenDatabase">Open</button>
+<button class="btn btn-primary" @onclick="Insert">Insert</button>
+<button class="btn btn-primary" @onclick="Bulk">Bulk</button>
+<button class="btn btn-primary" @onclick="Index">Index</button>
+<button class="btn btn-primary" @onclick="LargeData">Large Data</button>
+<button class="btn btn-primary" @onclick="Checkpoint">Large Data</button>
+
+<pre class="log">@_log.ToString()</pre>

@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace LiteDB.Engine.Disk.Streams.Adapters
 {
-    public class IndexedDbAdapter : BaseAdapter
+    public class LocalStorageAdapter:BaseAdapter
     {
-        public IndexedDbAdapter(IJSRuntime runtime, string dbName) :
-            base(runtime, dbName, StorageBackends.IndexedDb)
+        public LocalStorageAdapter(IJSRuntime runtime, string dbName) :  base(runtime, dbName, StorageBackends.LocalStorage)
         {
 
         }
+
     }
 }

@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LiteDB.Engine
+namespace LiteDB.Engine.Disk.Streams
 {
     public class BrowserStorageStream : Stream, IAsyncStreamEx
     {
@@ -38,7 +38,16 @@ namespace LiteDB.Engine
             this.PageSize = LiteDB.Constants.PAGE_SIZE;
             this.UseWriteCaches = options.UseCache;
             this._tasks = new List<Task>();
-            this.adapter = new IndexedDbAdapter(runtime, name);
+            switch (options.StorageBackend)
+            {
+                case StorageBackends.LocalStorage:
+                    this.adapter = new LocalStorageAdapter(runtime, name);
+                    break;
+                default:
+                    this.adapter = new IndexedDbAdapter(runtime, name);
+                    break;
+            }
+            //this.adapter = new BaseAdapter(runtime, name);
 
         }
         public long GetPageIndex(long position)
@@ -206,6 +215,7 @@ namespace LiteDB.Engine
             return;
         }
 
+
         public override long Seek(long offset, SeekOrigin origin)
         {
             var position =
@@ -216,6 +226,13 @@ namespace LiteDB.Engine
             _position = position;
 
             return _position;
+        }
+        public override async ValueTask DisposeAsync()
+        {
+            if (this.adapter != null)
+            {
+                await adapter.DisposeAsync();
+            }
         }
     }
 }

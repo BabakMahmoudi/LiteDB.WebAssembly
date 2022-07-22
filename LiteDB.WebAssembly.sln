@@ -9,11 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteDB.Demo", "LiteDB.Demo\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp", "ConsoleApp\ConsoleApp.csproj", "{30F91931-BB78-4DC8-B7D0-C615D1C8A45E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteDB.Blazor", "LiteDB.Blazor\LiteDB.Blazor.csproj", "{18BCAB7D-4FB8-4404-A4B0-4BB41556EC13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteDB.Blazor", "LiteDB.Blazor\LiteDB.Blazor.csproj", "{18BCAB7D-4FB8-4404-A4B0-4BB41556EC13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteDB.WebAssembly.Blazor", "LiteDB.WebAssembly.Blazor\LiteDB.WebAssembly.Blazor.csproj", "{0DA6BC8C-E6A1-49C4-9317-523FEFBC3D6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteDB.WebAssembly.Blazor", "LiteDB.WebAssembly.Blazor\LiteDB.WebAssembly.Blazor.csproj", "{0DA6BC8C-E6A1-49C4-9317-523FEFBC3D6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteDB.WebAssembly.Blazor.Tests", "LiteDB.WebAssembly.Blazor.Tests\LiteDB.WebAssembly.Blazor.Tests.csproj", "{B87261E6-F00E-4DE6-A704-FF1A93F669F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteDB.WebAssembly.Blazor.Tests", "LiteDB.WebAssembly.Blazor.Tests\LiteDB.WebAssembly.Blazor.Tests.csproj", "{B87261E6-F00E-4DE6-A704-FF1A93F669F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
