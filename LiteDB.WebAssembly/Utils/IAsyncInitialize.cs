@@ -14,5 +14,11 @@ namespace LiteDB
     public interface IAsyncInitialize
     {
         Task InitializeAsync();
+        //Task SetLengthAsync(long value);
+    }
+    public interface IAsyncStreamEx:IAsyncInitialize
+    {
+        //Task InitializeAsync();
+        Task SetLengthAsync(long value);
     }
 }

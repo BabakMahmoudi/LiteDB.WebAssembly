@@ -14,7 +14,7 @@ namespace LiteDB.Engine
     /// Implement custom fast/in memory mapped disk access
     /// [ThreadSafe]
     /// </summary>
-    internal class DiskService : IDisposable
+    internal class DiskService : IDisposable, IAsyncDisposable
     {
         private readonly MemoryCache _cache;
 
@@ -71,7 +71,7 @@ namespace LiteDB.Engine
         }
 
         private async Task InitializeAsync()
-        { 
+        {
             // checks if is a new file
             var isNew = _stream.Length == 0;
 
@@ -247,6 +247,10 @@ namespace LiteDB.Engine
             await _stream.FlushAsync();
         }
 
+        public async Task FlushStream()
+        {
+            await _stream.FlushAsync();
+        }
         /// <summary>
         /// Reset log position at end of file (based on header.LastPageID) and crop file if require
         /// </summary>
@@ -259,11 +263,36 @@ namespace LiteDB.Engine
                 _stream.SetLength(_logStartPosition);
             }
         }
+        public async Task ResetLogPositionAsync(bool crop)
+        {
+            _logStartPosition = _logEndPosition = (_header.LastPageID + 1) * PAGE_SIZE;
+            if (crop)
+            {
+                if (_stream is IAsyncStreamEx s)
+                {
+                    await s.SetLengthAsync(_logStartPosition);
+                }
+                else
+                {
+                    _stream.SetLength(_logStartPosition);
+
+                }
+
+            }
+        }
 
         public void Dispose()
         {
             // other disposes
             _cache?.Dispose();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            _cache?.Dispose();
+            if (_stream != null)
+                await _stream.DisposeAsync();
+            //throw new NotImplementedException();
         }
     }
 }

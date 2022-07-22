@@ -287,6 +287,10 @@ namespace LiteDB.Engine
             if (_header.FreeEmptyPageList != uint.MaxValue)
             {
                 var free = await this.GetPage<BasePage>(_header.FreeEmptyPageList);
+                if (free.PageType!= PageType.Empty)
+                {
+
+                }
 
                 ENSURE(free.PageType == PageType.Empty, "empty page must be defined as empty type");
 
@@ -355,9 +359,7 @@ namespace LiteDB.Engine
             {
                 _collectionPage.FreeDataPageList[initialSlot] = await this.RemoveFreeList(page, _collectionPage.FreeDataPageList[initialSlot]);
             }
-
-            // if there is no items, delete page
-            if (page.ItemsCount == 0)
+            if (page.ItemsCount == 0 )
             {
                 this.DeletePage(page);
             }
@@ -481,11 +483,21 @@ namespace LiteDB.Engine
         private void DeletePage<T>(T page)
             where T : BasePage
         {
+            var is_FreeIndexPageList = false;
+            if (BabakChanges.Apply)
+            {
+                var _page = _collectionPage.GetCollectionIndexes().FirstOrDefault(x => x.FreeIndexPageList == page.PageID);
+            }
             ENSURE(page.PrevPageID == uint.MaxValue && page.NextPageID == uint.MaxValue, "before delete a page, no linked list with any another page");
             ENSURE(page.ItemsCount == 0 && page.UsedBytes == 0 && page.HighestIndex == byte.MaxValue && page.FragmentedBytes == 0, "no items on page when delete this page");
             ENSURE(page.PageType == PageType.Data || page.PageType == PageType.Index, "only data/index page can be deleted");
             DEBUG(!_collectionPage.FreeDataPageList.Any(x => x == page.PageID), "this page cann't be deleted because free data list page is linked o this page");
-            DEBUG(!_collectionPage.GetCollectionIndexes().Any(x => x.FreeIndexPageList == page.PageID), "this page cann't be deleted because free index list page is linked o this page");
+            if (!BabakChanges.Apply)
+                DEBUG(!_collectionPage.GetCollectionIndexes().Any(x => x.FreeIndexPageList == page.PageID), "this page cann't be deleted because free index list page is linked o this page");
+            else
+            {
+                // do nothing here
+            }
             DEBUG(page.Buffer.Slice(PAGE_HEADER_SIZE, PAGE_SIZE - PAGE_HEADER_SIZE - 1).All(0), "page content shloud be empty");
 
             // mark page as empty and dirty

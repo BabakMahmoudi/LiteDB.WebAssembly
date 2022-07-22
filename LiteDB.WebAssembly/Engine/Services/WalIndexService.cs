@@ -244,7 +244,11 @@ namespace LiteDB.Engine
             // clear cache
             _disk.Cache.Clear();
 
-            _disk.ResetLogPosition(true);
+            //_disk.ResetLogPosition(true);
+            await _disk.ResetLogPositionAsync(true);
+            /// Flush stream here
+            /// to wait for delete pages in SetLength
+            //await _disk.FlushStream();
 
             return counter;
         }

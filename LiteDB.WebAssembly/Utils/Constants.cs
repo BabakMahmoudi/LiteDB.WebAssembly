@@ -10,6 +10,12 @@ using System.Threading;
 
 namespace LiteDB
 {
+    internal static class BabakChanges
+    {
+        public static bool Apply = true;
+
+    }
+
     /// <summary>
     /// Class with all constants used in LiteDB + Debbuger HELPER
     /// </summary>

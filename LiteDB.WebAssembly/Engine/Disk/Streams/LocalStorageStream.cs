@@ -48,7 +48,7 @@ namespace LiteDB.Engine
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return this.ReadAsync(buffer, offset, count).Result;
+            return this.ReadAsync(buffer, offset, count).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

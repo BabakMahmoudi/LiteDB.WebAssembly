@@ -135,7 +135,10 @@ namespace LiteDB.Engine
             if (_header?.Pragmas.Checkpoint > 0) await _walIndex?.Checkpoint();
 
             // close all disk streams (and delete log if empty)
-            _disk?.Dispose();
+            if (this._disk != null)
+            {
+                await _disk.DisposeAsync();
+            }
 
             // dispose lockers
             _locker.Dispose();

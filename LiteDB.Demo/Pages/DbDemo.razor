@@ -69,7 +69,7 @@
     private async Task QueryCollection()
     {
         var results = _personCollection.Query()
-            .Limit(10)
+            .Limit(500)
             .ToAsyncEnumerable();
 
         _log.AppendLine("query results (limit 10)");
